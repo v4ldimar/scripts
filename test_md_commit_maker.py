@@ -8,7 +8,7 @@ if len(sys.argv) != 2:
 AZURE_DEVOPS_REPO_URL = sys.argv[1].rstrip('/')
 
 # Run git log and capture commits with 'test' in the message
-git_log_cmd = ['git', 'log', '--grep=test', '--pretty=format:%H %s', '--first-parent', 'HEAD']
+git_log_cmd = ['git', 'log', '--grep=^tests\\?\\(.*\\)\\?:', '--pretty=format:%H %s', '--first-parent', 'HEAD']
 log_output = subprocess.check_output(git_log_cmd, encoding="utf-8")
 
 # Format each matching commit into markdown

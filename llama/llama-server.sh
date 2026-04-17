@@ -20,15 +20,18 @@ fi
 
 echo "Killing old llama-server..."
 pkill -9 -x llama-server 2>/dev/null
-sleep 5
-sync && echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
+sleep 2 
 
 echo "Starting: $MODEL"
 nohup /home/alabot/llama.cpp/build/bin/llama-server \
   --model "$MODEL_PATH" \
-  --threads 4 \
   --port 8080 \
-  --host 0.0.0.0 > /dev/null 2>&1 &
+  --host 0.0.0.0 \
+  --threads $(nproc) \
+  --no-mmap \
+  --mlock \
+  --n-gpu-layers 0 \
+  > llama.log 2>&1 &
 
 LLAMA_PID=$!
 sleep 8
@@ -38,5 +41,6 @@ if kill -0 $LLAMA_PID 2>/dev/null; then
   echo "Test: curl http://localhost:8080/v1/models"
 else
   echo "❌ Crashed"
+  tail -20 ~/llama.log
   free -h
 fi

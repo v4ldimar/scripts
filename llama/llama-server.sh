@@ -28,9 +28,8 @@ nohup /home/alabot/llama.cpp/build/bin/llama-server \
   --port 8080 \
   --host 0.0.0.0 \
   --threads $(nproc) \
-  --no-mmap \
-  --mlock \
-  --n-gpu-layers 0 \
+  --rope-scaling linear \
+  --rope-scale 2 \
   > llama.log 2>&1 &
 
 LLAMA_PID=$!

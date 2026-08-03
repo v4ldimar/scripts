@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          
+      - name: Install Betterleaks
+        run: |
+          set -euo pipefail
+          
+          curl -fLo betterleaks.tar.gz \
+          https://github.com/betterleaks/betterleaks/releases/download/v1.7.3/betterleaks_1.7.3_linux_x64.tar.gz
+          
+          tar -xzf betterleaks.tar.gz
+          
+          sudo install -m 0755 betterleaks /usr/local/bin/betterleaks
+          betterleaks --version
+
+      - name: Run credential scan
+        run: |
+          betterleaks git \
+            --report-format sarif \
+            --report-path betterleaks.sarif \
+            --redact \
+            --exit-code 1 \
+            .
+
+      - name: Upload findings to GitHub Security
+        if: always() && hashFiles('betterleaks.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: betterleaks.sarif
+          category: betterleaks

@@ -24,8 +24,15 @@ Start full Bash scripts with:
 
 ```bash
 #!/usr/bin/env bash
+# Description: Process input files and write the transformed output.
 set -euo pipefail
 ```
+
+Document every full script directly below the shebang:
+
+- Add `# Description: <description>` as a single comment line containing a concise one-to-three-sentence description of what the script does.
+- If the script depends on externally installed tools, add `# Requirements: <requirements>` immediately below the description. List requirements as comma-separated names, including versions when required or known, for example `# Requirements: Node v24.18.0, jq`.
+- Omit `# Requirements:` when the script needs no externally installed tools.
 
 Treat `set -e` as a backstop, not exception handling. It is suppressed in conditional contexts and has edge cases in functions, subshells, command substitutions, and boolean lists. Handle expected failures explicitly:
 
@@ -87,6 +94,29 @@ usage_error() {
 ```
 
 Use `${value:-default}` for optional values. Use `${value:?message}` when unset or blank is invalid.
+
+## Repository Organization
+
+When adding a script to a mixed-purpose toolbox repository, organize by tool or domain rather than by implementation language. Keep repository metadata at the root and place each script with related commands:
+
+```text
+tool-name/
+├── command.sh
+├── lib/             # sourced implementation shared by this tool
+└── tests/           # Bats or other behavior tests
+```
+
+- Use lowercase kebab-case for directories and executable script names.
+- Keep a single self-contained command directly in its tool directory. Add `lib/` only when the tool has substantial internal logic or two real consumers need the same behavior; add `tests/` when repeatable behavior tests exist.
+- Keep executable entry points thin: parse arguments, validate inputs, call domain functions, and translate failures into diagnostics and exit codes.
+- Put sourced files under the nearest tool's `lib/`, not beside unrelated entry points. Make libraries safe to source: avoid top-level side effects, namespace public functions when collisions are plausible, use `return` instead of `exit`, and do not change caller shell options unexpectedly.
+- Keep dependencies directed from entry points to libraries. Do not source entry points, create circular imports, or reach into another tool's private `lib/` directory.
+- Create a repository-level shared library only after stable behavior is genuinely shared across tools. Give shared modules narrow purpose-based names; avoid catch-all files such as `utils.sh` or `common.sh`.
+- Resolve paths relative to the script's own location when loading adjacent libraries; do not assume the caller's working directory.
+- Keep configuration outside implementation logic. Accept it through explicit flags, documented environment variables, or tool-local configuration files, with precedence and defaults defined in one place.
+- Follow the repository's established structure when it is already consistent. Do not reorganize unrelated scripts as a side effect of adding one command.
+
+Prefer one readable script over premature decomposition. Split code when it creates a stable boundary, independent test surface, or real reuse—not merely to shorten the entry-point file.
 
 ## Safe Argument Parsing
 
@@ -333,6 +363,8 @@ Give precise fixes with corrected snippets. Do not rewrite merely for style when
 
 - Correct Bash or POSIX dialect and documented minimum version
 - `#!/usr/bin/env bash` plus justified strict-mode behavior
+- One-line `# Description:` and, when needed, comma-separated `# Requirements:` comments below the shebang
+- Domain-based placement with thin entry points and narrowly scoped libraries when decomposition is warranted
 - Quoted expansions and safe array forwarding
 - Explicit expected-failure handling
 - Validated option values before `$2` access

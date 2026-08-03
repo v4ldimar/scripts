@@ -1,0 +1,1 @@
+create-bash-script: Create, review, and harden Bash scripts using safe defaults, strict error handling, secure file operations, portable patterns, and production-ready validation.

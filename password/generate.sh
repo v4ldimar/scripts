@@ -21,7 +21,7 @@ usage() {
   cat <<EOF_USAGE
 Usage: $PROGRAM [OPTIONS]
 
-Generate a pronounceable password such as: tedSo2-fasnut-sewmaw
+Generate a pronounceable password in the form: XXXXXX-XXXXXX-XXXXXX
 
 Options:
   -n, --count COUNT  Generate COUNT passwords (default: 1)
@@ -82,7 +82,7 @@ random_below() {
 }
 
 generate_password() {
-  local password=''
+  local result=''
   local uppercase_letter=0
   local digit_group=0
   local digit_position=0
@@ -109,13 +109,13 @@ generate_password() {
 
   for ((group = 0; group < GROUP_COUNT; group += 1)); do
     if ((group > 0)); then
-      password+='-'
+      result+='-'
     fi
 
     letter_in_group=0
     for ((position = 0; position < GROUP_LENGTH; position += 1)); do
       if ((group == digit_group && position == digit_position)); then
-        password+=$digit
+        result+=$digit
         continue
       fi
 
@@ -130,9 +130,9 @@ generate_password() {
       random_below "${#alphabet}"
       alphabet_index=$RANDOM_VALUE
       if ((letter_number == uppercase_letter)); then
-        password+=${uppercase_alphabet:alphabet_index:1}
+        result+=${uppercase_alphabet:alphabet_index:1}
       else
-        password+=${alphabet:alphabet_index:1}
+        result+=${alphabet:alphabet_index:1}
       fi
 
       ((letter_in_group += 1))
@@ -140,7 +140,7 @@ generate_password() {
     done
   done
 
-  printf '%s\n' "$password"
+  printf '%s\n' "$result"
 }
 
 main() {

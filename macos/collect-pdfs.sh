@@ -8,12 +8,16 @@ usage() {
   cat <<EOF_USAGE
 Usage: $PROGRAM [OPTIONS]
 
-Collect PDF files from one or more source roots and write them into a zip
-archive while preserving their folder structure below each chosen root.
+Collect files of a given type from one or more source roots and write them
+into a zip archive while preserving their folder structure below each
+chosen root.
 
 Options:
   -o, --output PATH   Write the zip archive to PATH
   -r, --root DIR      Add a root directory to scan (repeatable)
+  -t, --type EXT      File extension to collect, without the dot
+                      (default: pdf)
+  -v, --verbose       Print each file as it is found
   -h, --help          Show this help
 
 If no roots are supplied, the script scans \$HOME/Documents when it exists.
@@ -43,6 +47,8 @@ canonical_dir() {
 
 output=''
 roots=()
+file_type='pdf'
+verbose=0
 tmpdir=''
 archive_tmp=''
 home_dir=${HOME:-}
@@ -98,6 +104,20 @@ while (($#)); do
       roots+=("$root_value")
       shift
       ;;
+    -t|--type)
+      (($# >= 2)) || usage_error "missing value for $1"
+      file_type=$2
+      shift 2
+      ;;
+    --type=*)
+      file_type=${1#*=}
+      [[ -n $file_type ]] || usage_error "--type requires a value"
+      shift
+      ;;
+    -v|--verbose)
+      verbose=1
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -119,6 +139,10 @@ if (($# > 0)); then
   usage_error "unexpected positional arguments: $*"
 fi
 
+file_type=${file_type#.}
+[[ $file_type =~ ^[A-Za-z0-9]+$ ]] ||
+  usage_error "invalid --type value: $file_type"
+
 if ((${#roots[@]} == 0)); then
   [[ -n $home_dir ]] || die "HOME is not set"
 
@@ -130,7 +154,7 @@ if ((${#roots[@]} == 0)); then
 fi
 
 if [[ -z $output ]]; then
-  output="college-pdfs-$(date +%Y%m%d-%H%M%S).zip"
+  output="collected-${file_type}-$(date +%Y%m%d-%H%M%S).zip"
 fi
 
 output_dir=$(dirname -- "$output")
@@ -179,7 +203,11 @@ for root in "${roots[@]}"; do
   found=1
   root_label=$(basename -- "$root_real")
 
+  ((verbose)) && printf '%s: scanning %s\n' "$PROGRAM" "$root_real" >&2
+
   while IFS= read -r -d '' file; do
+    ((verbose)) && printf '%s: found %s\n' "$PROGRAM" "$file" >&2
+
     rel=${file#"$root_real"/}
     if ((single_root == 0)); then
       rel=$root_label/$rel
@@ -189,7 +217,7 @@ for root in "${roots[@]}"; do
     mkdir -p -- "$(dirname -- "$dest")"
     cp -p -- "$file" "$dest"
     ((copied++))
-  done < <(find "$root_real" -type f -iname '*.pdf' -print0)
+  done < <(find "$root_real" -type f -iname "*.$file_type" -print0)
 done
 
 if ((found == 0)); then
@@ -197,7 +225,7 @@ if ((found == 0)); then
 fi
 
 if ((copied == 0)); then
-  die "no PDF files found"
+  die "no .$file_type files found"
 fi
 
 (
@@ -209,7 +237,7 @@ mv -f -- "$archive_tmp" "$output_abs"
 archive_tmp=''
 
 if ((copied == 1)); then
-  printf '%s: wrote %s (%d PDF file)\n' "$PROGRAM" "$output_abs" "$copied"
+  printf '%s: wrote %s (%d .%s file)\n' "$PROGRAM" "$output_abs" "$copied" "$file_type"
 else
-  printf '%s: wrote %s (%d PDF files)\n' "$PROGRAM" "$output_abs" "$copied"
+  printf '%s: wrote %s (%d .%s files)\n' "$PROGRAM" "$output_abs" "$copied" "$file_type"
 fi

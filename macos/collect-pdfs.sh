@@ -216,7 +216,7 @@ for root in "${roots[@]}"; do
     dest=$staging/$rel
     mkdir -p -- "$(dirname -- "$dest")"
     cp -p -- "$file" "$dest"
-    ((copied++))
+    copied=$((copied + 1))
   done < <(find "$root_real" -type f -iname "*.$file_type" -print0)
 done
 

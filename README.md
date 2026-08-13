@@ -2,7 +2,19 @@
 
 A collection of useful scripts for work and personal stuff.
 
+## Agent Skills
+
+With Node.js and npm installed, run:
+
+```bash
+npx skills add v4ldimar/scripts
+```
+
+The Skills CLI discovers `create-bash-script` and installs it for the AI agent you select.
+
 ## Tools
+
+Run a command with `--help` to see its options and configuration.
 
 - azure-devops/
 	- test-commits-markdown.py - Render matching Git commits as Azure DevOps Markdown links. *Requirements:* Python 3.8+, Git.
@@ -31,15 +43,3 @@ A collection of useful scripts for work and personal stuff.
 - windows/
 	- timezone/set-norway.sh - Save the current Windows time zone and switch to W. Europe Standard Time (Norway). *Requirements:* Bash (Git Bash or WSL on Windows), tzutil.exe.
 	- timezone/restore-local.sh - Restore the saved Windows time zone from state, or set an explicitly supplied time zone ID. *Requirements:* Bash (Git Bash or WSL on Windows), tzutil.exe.
-
-Run a command with `--help` to see its options and configuration.
-
-## Install the skills
-
-With Node.js and npm installed, run:
-
-```bash
-npx skills add v4ldimar/scripts
-```
-
-The Skills CLI discovers `create-bash-script` and installs it for the AI agent you select.

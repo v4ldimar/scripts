@@ -16,8 +16,8 @@ The Skills CLI discovers `create-bash-script` and installs it for the AI agent y
 
 Run a command with `--help` to see its options and configuration.
 
-- azure-devops/
-	- test-commits-markdown.py - Render matching Git commits as Azure DevOps Markdown links. *Requirements:* Python 3.8+, Git.
+- git/
+	- test-commits-markdown.py - Render matching Git commits as Markdown links; use `--test-commits` for legacy `test(...)` prefixes. *Requirements:* Python 3.8+, Git.
 
 - immich/
 	- immich-sync.sh - Build a clean year-based Immich library copy from an upload folder while skipping .xmp metadata files. *Requirements:* Bash, GNU core utilities (find, cp, date).

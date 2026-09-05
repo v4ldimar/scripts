@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Description: Render matching Git commits as an Azure DevOps Markdown link list.
+# Description: Render matching Git commits as Markdown links.
 # Requirements: Python 3.8+, Git
 
-"""Render matching Git commits as Azure DevOps Markdown links."""
+"""Render matching Git commits as Markdown links."""
 
 import argparse
 import subprocess
@@ -12,13 +12,14 @@ from typing import List, Optional, Sequence, Tuple
 
 
 DEFAULT_PATTERN = r"^tests?(\([^)]*\))?:"
+TEST_COMMITS_PATTERN = r"^tests?(\([^)]*\))?:?"
 
 
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "azure_devops_repo_url",
-        help="repository web URL, for example https://dev.azure.com/org/project/_git/repo",
+        "repo_url",
+        help="repository web URL, for example https://github.com/org/repo",
     )
     parser.add_argument(
         "--repo",
@@ -31,11 +32,16 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         default="HEAD",
         help="revision passed to git log (default: HEAD)",
     )
-    parser.add_argument(
+    pattern_group = parser.add_mutually_exclusive_group()
+    pattern_group.add_argument(
         "--grep",
         dest="pattern",
-        default=DEFAULT_PATTERN,
         help=r"extended regular expression for commit subjects (default: ^tests?(\([^)]*\))?:)",
+    )
+    pattern_group.add_argument(
+        "--test-commits",
+        action="store_true",
+        help=r"match legacy test(...) commit prefixes, with or without a trailing colon",
     )
     parser.add_argument(
         "--all-parents",
@@ -46,13 +52,18 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
 
 
 def git_commits(args: argparse.Namespace) -> List[Tuple[str, str]]:
+    pattern = (
+        TEST_COMMITS_PATTERN
+        if args.test_commits
+        else args.pattern or DEFAULT_PATTERN
+    )
     command = [
         "git",
         "-C",
         str(args.repo),
         "log",
         "--extended-regexp",
-        f"--grep={args.pattern}",
+        f"--grep={pattern}",
         "--format=%H%x00%s",
     ]
     if not args.all_parents:
@@ -90,9 +101,9 @@ def markdown_label(text: str) -> str:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
-    base_url = args.azure_devops_repo_url.rstrip("/")
+    base_url = args.repo_url.rstrip("/")
     if not base_url:
-        print("error: Azure DevOps repository URL must not be empty", file=sys.stderr)
+        print("error: repository URL must not be empty", file=sys.stderr)
         return 2
 
     try:
